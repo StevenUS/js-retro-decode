@@ -1,5 +1,3 @@
-// const checkWord = require("check-word");
-// const checkWords = checkWord("en");
 const readline = require('readline');
 const fs = require('fs');
 
@@ -33,8 +31,7 @@ function getLetter(letter) {
 function decypherWord(word) {
     const possibles = {};
     let curIdx = 0;
-    for (let letter of word) {
-        const ocs = getOccurences(letter);
+    for (let letter of word) { const ocs = getOccurences(letter);
         for (let o of ocs) {
             if (possibles[curIdx]) {
                 possibles[curIdx].push(o);
