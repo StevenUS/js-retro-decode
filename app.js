@@ -1,15 +1,16 @@
-console.time('runTime')
-const checkWord = require("check-word");
-const checkWords = checkWord("en");
+// const checkWord = require("check-word");
+// const checkWords = checkWord("en");
+const readline = require('readline');
+const fs = require('fs');
 
-var alpha =  "abcdefghijklmnopqrstuvwxyz";
-var zalpha = "xgczygkhzjklfcwlgbfghvwxyz";
+let alpha;
+let zalpha;
 
-var text =
-    "zf ghyby x wxy gw hxvy x fzckly fcbzlg ghxg cwcgzkhbyf ywhb lwcxl gxckycz? (fybvyb.xfl, ycv vxbf, lwcxl.lbwlybgzyf, wbycch.lbwlybgzyf ygc.)";
-// text = "zg ghy fcwly wg x gxfk chxckyf, wy fhwhlz byfcwly xcz fxky fhby ghy byghzbyfycgf xby hlzxgyz clyxbly zc ghy gzckyg fw yvybywcy zf wc ghy fxfy lxky wzgh ghy kwxlf xcz hww gw xchzyvy ghyf."
+let text;
 
-var words = text.split(" ");
+let words;
+
+let englishWords;
 
 function getOccurences(letter) {
     var letters = [];
@@ -46,30 +47,13 @@ function decypherWord(word) {
     return possibles;
 }
 
-function main() {
-    var allPossibles = [];
-    for (var word of words) {
-        allPossibles.push(decypherWord(word));
-
-    }
-    // console.log(allPossibles)
-    var possibleWords = [];
-    for (let possibles of allPossibles) {
-        possibleWords.push(printPerms(Object.values(possibles)));
-    }
-    // console.log(possibleWords)
-    // console.timeEnd('runTime')
-    // return
-    // trimNonEnglishWords(possibleWords);
-}
-
 function printPerms(possibles) {
-    var words = [];
+    let words = [];
     for (let i = 0; i < possibles.length; i++) {
         if (i == 0) {
             words = possibles[i];
         } else {
-            var newWords = [];
+            const newWords = [];
             for (let char of possibles[i]) {
                 for (let word of words) {
                     newWords.push(word + char);
@@ -82,11 +66,11 @@ function printPerms(possibles) {
 }
 
 function trimNonEnglishWords(possibleWords) {
-    var actualWords = {};
-    var curIdx = 0;
+    const actualWords = {};
+    let curIdx = 0;
     for (let words of possibleWords) {
         for (let word of words) {
-            if (checkWords.check(word) || word.length === 1) {
+            if (englishWords[word] || word.length === 1) {
                 if (actualWords[curIdx]) {
                     actualWords[curIdx].push(word);
                 } else {
@@ -100,5 +84,54 @@ function trimNonEnglishWords(possibleWords) {
         console.log(k, actualWords[k]);
     }
 }
-main();
-console.timeEnd('runTime')
+
+async function processLineByLine() {
+    englishWords = {}
+    const fileStream = fs.createReadStream('../go-words/english-words/words_alpha.txt');
+
+    const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+    });
+
+    for await (const line of rl) {
+        englishWords[line] = true;
+    }
+
+    console.timeEnd('wordUpload')
+
+    main();
+}
+
+function main() {
+
+    console.time('runTime')
+
+    alpha =  "abcdefghijklmnopqrstuvwxyz";
+    zalpha = "xgczygkhzjklfcwlgbfghvwxyz";
+
+    text =
+        "zf ghyby x wxy gw hxvy x fzckly fcbzlg ghxg cwcgzkhbyf ywhb lwcxl gxckycz? (fybvyb.xfl, ycv vxbf, lwcxl.lbwlybgzyf, wbycch.lbwlybgzyf ygc.)";
+    // text = "zg ghy fcwly wg x gxfk chxckyf, wy fhwhlz byfcwly xcz fxky fhby ghy byghzbyfycgf xby hlzxgyz clyxbly zc ghy gzckyg fw yvybywcy zf wc ghy fxfy lxky wzgh ghy kwxlf xcz hww gw xchzyvy ghyf."
+
+    words = text.split(" ");
+
+    const allPossibles = [];
+    for (let word of words) {
+        allPossibles.push(decypherWord(word));
+
+    }
+    // console.log(allPossibles)
+    const possibleWords = [];
+    for (let possibles of allPossibles) {
+        possibleWords.push(printPerms(Object.values(possibles)));
+    }
+    // console.log(possibleWords)
+    // console.timeEnd('runTime')
+    // return
+    trimNonEnglishWords(possibleWords);
+    console.timeEnd('runTime')
+}
+
+console.time('wordUpload')
+processLineByLine()
