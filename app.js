@@ -29,14 +29,14 @@ function getLetter(letter) {
 
 // returns all of the possible words
 function decypherWord(word) {
-    const possibles = {};
+    const possibles = [];
     let curIdx = 0;
     for (let letter of word) { const ocs = getOccurences(letter);
         for (let o of ocs) {
-            if (possibles[curIdx]) {
+            if (possibles.length > curIdx) {
                 possibles[curIdx].push(o);
             } else {
-                possibles[curIdx] = [o];
+                possibles.push([o]);
             }
         }
         curIdx++;
@@ -121,7 +121,7 @@ function main() {
     // console.log(allPossibles)
     const possibleWords = [];
     for (let possibles of allPossibles) {
-        possibleWords.push(printPerms(Object.values(possibles)));
+        possibleWords.push(printPerms(possibles));
     }
     // console.log(possibleWords)
     // console.timeEnd('runTime')
