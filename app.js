@@ -1,59 +1,101 @@
-const readline = require('readline');
-const fs = require('fs');
+const readline = require("readline");
+const fs = require("fs");
 
-let alpha;
-let zalpha;
+const ALPHA = "abcdefghijklmnopqrstuvwxyz";
+const CYPHER = "xgczygkhzjklfcwlgbfghvwxyz";
+const ENGLISH_WORDS = {};
 
-let text;
+async function processLineByLine() {
+    console.time("wordUpload");
 
-let words;
+    const fileStream = fs.createReadStream("./words_alpha.txt");
 
-let englishWords;
+    const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+    });
 
-function getOccurences(letter) {
+    for await (const line of rl) {
+        ENGLISH_WORDS[line] = true;
+    }
+
+    console.timeEnd("wordUpload");
+
+    main();
+}
+
+function main() {
+    console.time("runTime");
+
+    // const text = "zf ghyby x wxy gw hxvy x fzckly fcbzlg ghxg cwcgzkhbyf ywhb lwcxl gxckycz? (fybvyb.xfl, ycv vxbf, lwcxl.lbwlybgzyf, wbycch.lbwlybgzyf ygc.)";
+
+    const text =
+        "zg ghy fcwly wg x gxfk chxckyf, wy fhwhlz byfcwly xcz fxky fhby ghy byghzbyfycgf xby hlzxgyz clyxbly zc ghy gzckyg fw yvybywcy zf wc ghy fxfy lxky wzgh ghy kwxlf xcz hww gw xchzyvy ghyf.";
+    // SOLUTION: "If the scope of a task changes, we should rescope and make sure the requirements are updated clearly in the ticket so everyone is on the same page with the goals and how to achieve them."
+
+    const words = text.split(" ");
+
+    const allPossibles = [];
+    for (let word of words) {
+        allPossibles.push(getPossibleWords(word));
+    }
+
+    const possibleWords = [];
+    for (let possibles of allPossibles) {
+        possibleWords.push(getPermutations(possibles));
+    }
+
+    for (let word of possibleWords) {
+        console.log(word);
+    }
+
+    console.timeEnd("runTime");
+}
+
+function getLetters(letter) {
     var letters = [];
-    for (var i = 0; i < zalpha.length; i++) {
-        if (zalpha[i] === letter) letters.push(getLetter(i));
+    for (var i = 0; i < CYPHER.length; i++) {
+        if (CYPHER[i] === letter) letters.push(ALPHA[i]);
     }
     return letters;
 }
 
-// get's the decyphered letter
-function getLetter(letter) {
-    if (alpha[letter]) {
-        return alpha[letter];
-    } else {
-        return "";
-    }
-}
-
 // returns all of the possible words
-function decypherWord(word) {
+function getPossibleWords(cypheredWord) {
     const possibles = [];
-    let curIdx = 0;
-    for (let letter of word) { const ocs = getOccurences(letter);
-        for (let o of ocs) {
+    for (let curIdx = 0; curIdx < cypheredWord.length; curIdx++) {
+        let letter = cypheredWord[curIdx];
+        const letters = getLetters(letter);
+        for (let decypheredLetter of letters) {
             if (possibles.length > curIdx) {
-                possibles[curIdx].push(o);
+                possibles[curIdx].push(decypheredLetter);
             } else {
-                possibles.push([o]);
+                possibles.push([decypheredLetter]);
             }
         }
-        curIdx++;
     }
     return possibles;
 }
 
-function printPerms(possibles) {
+function getPermutations(possibles) {
     let words = [];
     for (let i = 0; i < possibles.length; i++) {
-        if (i == 0) {
+        if (i === 0) {
             words = possibles[i];
         } else {
             const newWords = [];
             for (let char of possibles[i]) {
                 for (let word of words) {
-                    newWords.push(word + char);
+                    let newWord = word + char;
+                    // once the words are concatenated, check if they are
+                    // in the dictionary, and add them to the final list
+                    if (newWord.length === possibles.length) {
+                        if (ENGLISH_WORDS[newWord]) {
+                            newWords.push(newWord);
+                        }
+                    } else {
+                        newWords.push(newWord);
+                    }
                 }
             }
             words = newWords;
@@ -62,73 +104,4 @@ function printPerms(possibles) {
     return words;
 }
 
-function trimNonEnglishWords(possibleWords) {
-    const actualWords = {};
-    let curIdx = 0;
-    for (let words of possibleWords) {
-        for (let word of words) {
-            if (englishWords[word] || word.length === 1) {
-                if (actualWords[curIdx]) {
-                    actualWords[curIdx].push(word);
-                } else {
-                    actualWords[curIdx] = [word];
-                }
-            }
-        }
-        curIdx++;
-    }
-    for (let k of Object.keys(actualWords)) {
-        console.log(k, actualWords[k]);
-    }
-}
-
-async function processLineByLine() {
-    englishWords = {}
-    const fileStream = fs.createReadStream('../go-words/english-words/words_alpha.txt');
-
-    const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity
-    });
-
-    for await (const line of rl) {
-        englishWords[line] = true;
-    }
-
-    console.timeEnd('wordUpload')
-
-    main();
-}
-
-function main() {
-
-    console.time('runTime')
-
-    alpha =  "abcdefghijklmnopqrstuvwxyz";
-    zalpha = "xgczygkhzjklfcwlgbfghvwxyz";
-
-    text =
-        "zf ghyby x wxy gw hxvy x fzckly fcbzlg ghxg cwcgzkhbyf ywhb lwcxl gxckycz? (fybvyb.xfl, ycv vxbf, lwcxl.lbwlybgzyf, wbycch.lbwlybgzyf ygc.)";
-    // text = "zg ghy fcwly wg x gxfk chxckyf, wy fhwhlz byfcwly xcz fxky fhby ghy byghzbyfycgf xby hlzxgyz clyxbly zc ghy gzckyg fw yvybywcy zf wc ghy fxfy lxky wzgh ghy kwxlf xcz hww gw xchzyvy ghyf."
-
-    words = text.split(" ");
-
-    const allPossibles = [];
-    for (let word of words) {
-        allPossibles.push(decypherWord(word));
-
-    }
-    // console.log(allPossibles)
-    const possibleWords = [];
-    for (let possibles of allPossibles) {
-        possibleWords.push(printPerms(possibles));
-    }
-    // console.log(possibleWords)
-    // console.timeEnd('runTime')
-    // return
-    trimNonEnglishWords(possibleWords);
-    console.timeEnd('runTime')
-}
-
-console.time('wordUpload')
-processLineByLine()
+processLineByLine();
